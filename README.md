@@ -1,4 +1,6 @@
-# docker-registry #
+# docker-registry
+
+Scala implementation of Docker Registry API V2
 
 ## Build & Run ##
 
