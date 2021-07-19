@@ -2,8 +2,11 @@ package com.github.takezoe.docker.registry
 
 import com.github.takezoe.docker.registry.storage.DockerRegistryStorage
 import org.scalatra._
+import org.scalatra.json._
+import org.json4s.DefaultFormats
 
-class MyScalatraServlet extends ScalatraServlet {
+class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
+  protected implicit lazy val jsonFormats = DefaultFormats
   private val storage = new DockerRegistryStorage()
 
   get("/") {
@@ -112,6 +115,7 @@ class MyScalatraServlet extends ScalatraServlet {
 
   // Listing Repositories
   get("/v2/_catalog") {
+    contentType = formats("json")
     NotImplemented()
   }
 
