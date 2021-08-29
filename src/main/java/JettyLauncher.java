@@ -4,13 +4,8 @@ import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
-import org.eclipse.jetty.server.session.DefaultSessionCache;
-import org.eclipse.jetty.server.session.FileSessionDataStore;
-import org.eclipse.jetty.server.session.SessionCache;
-import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.webapp.WebAppContext;
 
-import java.io.File;
 import java.net.URL;
 import java.net.InetSocketAddress;
 import java.security.ProtectionDomain;
@@ -18,20 +13,14 @@ import java.security.ProtectionDomain;
 public class JettyLauncher
 {
     public static void main(String[] args) throws Exception {
-        System.setProperty("java.awt.headless", "true");
-
-        String host = null; //getEnvironmentVariable("gitbucket.host");
-        String port = null; //getEnvironmentVariable("gitbucket.port");
+        String host = null;
+        String port = null;
         InetSocketAddress address;
-        String contextPath = null; //getEnvironmentVariable("gitbucket.prefix");
-        String tmpDirPath = null; //getEnvironmentVariable("gitbucket.tempDir");
+        String contextPath = null;
+        String tmpDirPath = null;
         boolean forceHttps = false;
-        boolean saveSessions = false;
 
         for(String arg: args) {
-            if(arg.equals("--save_sessions")) {
-                saveSessions = true;
-            }
             if(arg.startsWith("--") && arg.contains("=")) {
                 String[] dim = arg.split("=");
                 if(dim.length >= 2) {
@@ -44,12 +33,6 @@ public class JettyLauncher
                             break;
                         case "--prefix":
                             contextPath = dim[1];
-                            break;
-                        case "--temp_dir":
-                            tmpDirPath = dim[1];
-                            break;
-                        case "--plugin_dir":
-                            System.setProperty("gitbucket.pluginDir", dim[1]);
                             break;
                     }
                 }
@@ -79,37 +62,6 @@ public class JettyLauncher
 
         WebAppContext context = new WebAppContext();
 
-//        if(saveSessions) {
-//            File sessDir = new File(getGitBucketHome(), "sessions");
-//            if(!sessDir.exists()){
-//                sessDir.mkdirs();
-//            }
-//            SessionHandler sessions = context.getSessionHandler();
-//            SessionCache cache = new DefaultSessionCache(sessions);
-//            FileSessionDataStore fsds = new FileSessionDataStore();
-//            fsds.setStoreDir(sessDir);
-//            cache.setSessionDataStore(fsds);
-//            sessions.setSessionCache(cache);
-//        }
-//
-//        File tmpDir;
-//        if(tmpDirPath == null || tmpDirPath.equals("")){
-//            tmpDir = new File(getGitBucketHome(), "tmp");
-//            if(!tmpDir.exists()){
-//                tmpDir.mkdirs();
-//            }
-//        } else {
-//            tmpDir = new File(tmpDirPath);
-//            if(!tmpDir.exists()){
-//                throw new java.io.FileNotFoundException(
-//                        String.format("temp_dir \"%s\" not found", tmpDirPath));
-//            } else if(!tmpDir.isDirectory()) {
-//                throw new IllegalArgumentException(
-//                        String.format("temp_dir \"%s\" is not a directory", tmpDirPath));
-//            }
-//        }
-//        context.setTempDirectory(tmpDir);
-
         // Disabling the directory listing feature.
         context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
 
@@ -131,27 +83,6 @@ public class JettyLauncher
         server.setStopTimeout(7_000);
         server.start();
         server.join();
-    }
-
-//    private static File getGitBucketHome(){
-//        String home = System.getProperty("gitbucket.home");
-//        if(home != null && home.length() > 0){
-//            return new File(home);
-//        }
-//        home = System.getenv("GITBUCKET_HOME");
-//        if(home != null && home.length() > 0){
-//            return new File(home);
-//        }
-//        return new File(System.getProperty("user.home"), ".gitbucket");
-//    }
-
-    private static String getEnvironmentVariable(String key){
-        String value =  System.getenv(key.toUpperCase().replace('.', '_'));
-        if (value != null && value.length() == 0){
-            return null;
-        } else {
-            return value;
-        }
     }
 
     private static int getPort(String port){
