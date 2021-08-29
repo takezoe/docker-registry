@@ -15,7 +15,9 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
 
   // API Version Check
   get("/v2/") {
-    Ok()
+    contentType = formats("json")
+    response.addHeader("Docker-Distribution-Api-Version", "registry/2.0")
+    Ok(Map.empty)
   }
 
   // Pulling an Image Manifest
