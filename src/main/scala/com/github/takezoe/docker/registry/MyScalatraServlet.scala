@@ -10,7 +10,7 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
   private val storage = new DockerRegistryStorage()
 
   get("/") {
-    views.html.hello()
+    Ok()
   }
 
   // API Version Check
@@ -118,11 +118,16 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
   // Listing Repositories
   get("/v2/_catalog") {
     contentType = formats("json")
+    response.addHeader("Docker-Distribution-Api-Version", "registry/2.0")
+    // {"repositories":["ubuntu"]}
     NotImplemented()
   }
 
   // Listing Image Tags
   get("/v2/:name/tags/list") {
+    contentType = formats("json")
+    response.addHeader("Docker-Distribution-Api-Version", "registry/2.0")
+    // {"name":"ubuntu","tags":["latest"]}
     NotImplemented()
   }
 
