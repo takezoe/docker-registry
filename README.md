@@ -4,11 +4,17 @@ Scala implementation of Docker Registry API V2
 
 ## Build & Run
 
+Run on Local
+
 ```sh
-$ cd docker-registry
-$ sbt
-> jetty:start
-> browse
+$ sbt ~jetty:start
+```
+
+Run on Docker
+
+```sh
+$ ./build-docker-image.sh
+$ docker run -t -i --rm -p 8080:8080 scala-docker-registry
 ```
 
 If `browse` doesn't launch your browser, manually open [http://localhost:8080/](http://localhost:8080/) in your browser.
@@ -17,5 +23,5 @@ If `browse` doesn't launch your browser, manually open [http://localhost:8080/](
 
 - [Docker Registry HTTP API V2](https://docs.docker.com/registry/spec/api/)
 - [Deploy a registry server](https://docs.docker.com/registry/deploying/)
-- [Official Docker Registry implementation](https://github.com/docker/docker-ce/tree/master/components/engine/registry)
+- [Official Docker Registry implementation](https://github.com/distribution/distribution/tree/main/registry)
 - [Docker Registry client](https://github.com/heroku/docker-registry-client)
