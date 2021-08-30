@@ -44,6 +44,7 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
   post("/v2/:name/blobs/uploads/") {
     val name   = params("name")
     val digest = params.get("digest")
+    println(s"Digest: ${digest}")
 
     digest match {
       case Some(digest) =>
@@ -105,15 +106,15 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
     val uuid   = params("uuid")
 
     // TODO
-    val cType  = request.getHeader("Content-Type")
     val range  = request.getHeader("Content-Range")
     val length = request.getHeader("Content-Length")
-    println(s"Content-Type: ${cType}")
     println(s"Content-Range: ${range}")
     println(s"Content-Length: ${length}")
 
     val in = request.getInputStream
     val size = storage.uploadLayer(name, uuid, in)
+
+    println(s"Uploaded size: ${size}")
 
     response.addHeader("Docker-Upload-UUID", uuid)
     response.addHeader("Location", s"/v2/${name}/blobs/uploads/${uuid}")
