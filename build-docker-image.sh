@@ -1,3 +1,3 @@
 #!/bin/sh
-sbt clean executable
+sbt clean package
 docker build -t scala-docker-registry .
