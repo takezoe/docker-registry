@@ -1,6 +1,6 @@
 package com.github.takezoe.docker.registry
 
-import com.github.takezoe.docker.registry.entity.Tags
+import com.github.takezoe.docker.registry.entity.{FSLayer, Tags}
 import com.github.takezoe.docker.registry.storage.DockerRegistryStorage
 import org.apache.commons.io.{FileUtils, IOUtils}
 import org.scalatra._
@@ -11,7 +11,6 @@ import org.json4s.JsonAST.JString
 import java.io.File
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.{ServletRequest, ServletResponse}
-import scala.jdk.CollectionConverters._
 
 class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
   protected implicit lazy val jsonFormats = DefaultFormats
@@ -31,16 +30,52 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
 
   // Pulling an Image Manifest
   get("/v2/:name/manifests/:reference") {
-    NotImplemented()
+    contentType = formats("json")
+    val name      = params("name")
+    val reference = params("reference")
+    val file      = new File(s"data/${name}/${reference}.json")
+    if (file.exists()) {
+      try {
+        val bytes     = FileUtils.readFileToByteArray(file)
+        val json      = parse(new String(bytes, "UTF-8"))
+        val manifest = entity.Manifest(
+          name = name,
+          architecture = "amd64",
+          tag = reference,
+          fsLayers = (json \ "layers").extract[List[Map[String, Any]]].map { layer =>
+            FSLayer(layer("digest").asInstanceOf[String])
+          },
+          history = Seq.empty,
+          schemaVersion = 1,
+          signatures = entity.Signatures(
+            header = Map.empty, signature = "", `protected` = ""
+          )
+        )
+        println(manifest)
+        Ok(manifest)
+      } catch {
+        case e: Exception =>
+          e.printStackTrace()
+          throw e
+      }
+    } else {
+      NotFound()
+    }
   }
 
   // Existing Manifests
   head("/v2/:name/manifests/:reference") {
+    val name      = params("name")
+    val reference = params.get("reference")
+
     NotImplemented()
   }
 
   // Pulling a Layer
   get("/v2/:name/blobs/:digest") {
+    val name   = params("name")
+    val digest = params.get("digest")
+
     NotImplemented()
   }
 
@@ -177,7 +212,7 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
     response.addHeader("Docker-Distribution-Api-Version", "registry/2.0")
 
     val name = params("name")
-    
+
     // TODO Move this to storage
     val tags = new File(s"data/$name")
       .listFiles((file, name) => name.endsWith(".json"))
