@@ -1,6 +1,7 @@
 package com.github.takezoe.docker.registry
 
 import com.github.takezoe.docker.registry.storage.DockerRegistryStorage
+import org.apache.commons.io.IOUtils
 import org.scalatra._
 import org.scalatra.json._
 import org.json4s.DefaultFormats
@@ -68,8 +69,11 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
     val name   = params("name")
     val digest = params("digest")
     storage.getLayer(name, digest) match {
-      case Some(_) => Ok()
-      case None    => NotFound()
+      case Some(x) => Ok(headers = Map(
+        "Content-Length"        -> s"${x.length()}",
+        "Docker-Content-Digest" -> digest
+      ))
+      case None => NotFound()
     }
   }
 
@@ -137,17 +141,10 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
   put("/v2/:name/manifests/:reference") {
     val name      = params("name")
     val reference = params("reference")
-
-    val in = request.getInputStream
-
-    // TODO debug
-    val bytes = new Array[Byte](in.available())
-    in.read(bytes)
-    val str = new String(bytes, "UTF-8")
-    println(str)
-
-    val json = parse(str)
-    val digest = (json \ "config" \ "digest").asInstanceOf[JString].values
+    val bytes     = IOUtils.toByteArray(request.getInputStream)
+    val str       = new String(bytes, "UTF-8")
+    val json      = parse(str)
+    val digest    = (json \ "config" \ "digest").asInstanceOf[JString].values
 
     response.addHeader("Location", s"/v2/${name}/manifests/${reference}")
     response.addHeader("Docker-Content-Digest", digest)
