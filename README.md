@@ -17,7 +17,13 @@ $ ./build-docker-image.sh
 $ docker run -t -i --rm -p 8080:8080 scala-docker-registry
 ```
 
-If `browse` doesn't launch your browser, manually open [http://localhost:8080/](http://localhost:8080/) in your browser.
+Test to push a docker image
+
+```sh
+$ docker pull ubuntu:16.04
+$ docker tag ubuntu:16.04 localhost:8080/my-ubuntu
+$ docker push localhost:8080/my-ubuntu
+```
 
 ## References
 
