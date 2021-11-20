@@ -1,5 +1,6 @@
 package com.github.takezoe.docker.registry
 
+import com.github.takezoe.docker.registry.entity.Tags
 import com.github.takezoe.docker.registry.storage.DockerRegistryStorage
 import org.apache.commons.io.{FileUtils, IOUtils}
 import org.scalatra._
@@ -10,6 +11,7 @@ import org.json4s.JsonAST.JString
 import java.io.File
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.{ServletRequest, ServletResponse}
+import scala.jdk.CollectionConverters._
 
 class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
   protected implicit lazy val jsonFormats = DefaultFormats
@@ -173,8 +175,16 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
   get("/v2/:name/tags/list") {
     contentType = formats("json")
     response.addHeader("Docker-Distribution-Api-Version", "registry/2.0")
+
+    val name = params("name")
+    val tags = new File(s"data/$name")
+      .listFiles((file, name) => name.endsWith(".json"))
+      .map { file =>
+        file.getName.replace("\\.json$", "")
+      }
+
     // {"name":"ubuntu","tags":["latest"]}
-    NotImplemented()
+    Ok(Tags(name, tags))
   }
 
   // Deleting an Image
