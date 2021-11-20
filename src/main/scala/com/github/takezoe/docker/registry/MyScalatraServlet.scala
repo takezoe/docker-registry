@@ -177,6 +177,8 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
     response.addHeader("Docker-Distribution-Api-Version", "registry/2.0")
 
     val name = params("name")
+    
+    // TODO Move this to storage
     val tags = new File(s"data/$name")
       .listFiles((file, name) => name.endsWith(".json"))
       .map { file =>
