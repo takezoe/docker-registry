@@ -54,7 +54,7 @@ class DockerRegistryStorage {
     progress.remove(uuid)
   }
 
-  def pushManifest(manifest: com.github.takezoe.docker.registry.entity.Manifest): Unit = {
-    ???
-  }
+//  def pushManifest(manifest: com.github.takezoe.docker.registry.entity.Manifest): Unit = {
+//    ???
+//  }
 }

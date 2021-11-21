@@ -9,6 +9,8 @@ import org.json4s.DefaultFormats
 import org.json4s.JsonAST.JString
 
 import java.io.File
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.{ServletRequest, ServletResponse}
 
@@ -33,6 +35,7 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
     //contentType = formats("json")
     contentType = "application/vnd.docker.distribution.manifest.v2+json"
     response.addHeader("Docker-Distribution-Api-Version", "registry/2.0")
+    //println("Accept: " + request.header("Accept"))
     val name      = params("name")
     val reference = params("reference")
     val file      = new File(s"data/${name}/${reference}.json")
@@ -164,14 +167,14 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
     val reference = params("reference")
     val bytes     = IOUtils.toByteArray(request.getInputStream)
     val str       = new String(bytes, "UTF-8")
+    val digest    = sha256(str)
 
-    println(str)
-    println(request.header("Content-Type"))
     // TODO Move this to storage
     FileUtils.writeByteArrayToFile(new File(s"./data/${name}/${reference}.json"), str.getBytes("UTF-8"))
+    FileUtils.writeByteArrayToFile(new File(s"./data/${name}/sha256:${digest}.json"), str.getBytes("UTF-8"))
 
-    val json   = parse(str)
-    val digest = (json \ "config" \ "digest").asInstanceOf[JString].values
+//    val json   = parse(str)
+//    val digest = (json \ "config" \ "digest").asInstanceOf[JString].values
 
     response.addHeader("Location", s"/v2/${name}/manifests/${reference}")
     response.addHeader("Docker-Content-Digest", digest)
@@ -213,5 +216,21 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
   override def service(req: ServletRequest, res: ServletResponse): Unit = {
     println(s"${req.asInstanceOf[HttpServletRequest].getMethod} ${req.asInstanceOf[HttpServletRequest].getRequestURI}")
     super.service(req, res)
+  }
+
+  private def sha256(value: String): String = {
+    val digest = MessageDigest.getInstance("SHA-256")
+    val bytes = digest.digest(value.getBytes(StandardCharsets.UTF_8))
+    bytesToHex(bytes)
+  }
+
+  private def bytesToHex(hash: Array[Byte]) = {
+    val hexString = new StringBuilder(2 * hash.length)
+    for (i <- 0 until hash.length) {
+      val hex = Integer.toHexString(0xff & hash(i))
+      if (hex.length == 1) hexString.append('0')
+      hexString.append(hex)
+    }
+    hexString.toString
   }
 }
