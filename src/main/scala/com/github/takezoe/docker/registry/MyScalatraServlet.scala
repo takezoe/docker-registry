@@ -2,7 +2,7 @@ package com.github.takezoe.docker.registry
 
 import com.github.takezoe.docker.registry.entity.Tags
 import com.github.takezoe.docker.registry.storage.DockerRegistryStorage
-import org.apache.commons.io.{FileUtils, IOUtils}
+import org.apache.commons.io.IOUtils
 import org.scalatra._
 import org.scalatra.json._
 import org.json4s.DefaultFormats
@@ -99,13 +99,13 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
     val name   = params("name")
     val digest = params("digest")
     storage.getLayer(name, digest) match {
-      case Some(file) => {
+      case Some(file) =>
         Ok(headers = Map(
           "Content-Length"        -> s"${file.length()}",
           "Docker-Content-Digest" -> digest
         ))
-      }
-      case None => NotFound()
+      case None =>
+        NotFound()
     }
   }
 
@@ -167,7 +167,10 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
 
   // Deleting a Layer
   delete("/v2/:name/blobs/:digest") {
-    NotImplemented()
+    val name   = params("name")
+    val digest = params("digest")
+    storage.deleteLayer(name, digest)
+    Ok()
   }
 
   // Pushing an Image Manifest
@@ -175,13 +178,12 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
     val name      = params("name")
     val reference = params("reference")
     val bytes     = IOUtils.toByteArray(request.getInputStream)
-    val str       = new String(bytes, "UTF-8")
+    val manifest  = new String(bytes, "UTF-8")
 
-    // TODO Move this to storage
-    FileUtils.writeByteArrayToFile(new File(s"./data/${name}/${reference}.json"), str.getBytes("UTF-8"))
-    FileUtils.writeByteArrayToFile(new File(s"./data/${name}/sha256:${sha256(str)}.json"), str.getBytes("UTF-8"))
+    storage.publishManifest(name, reference, manifest)
+    storage.publishManifest(name, s"sha256:${sha256(manifest)}", manifest) // TODO Do together inside storage?
 
-    val json   = parse(str)
+    val json   = parse(manifest)
     val digest = (json \ "config" \ "digest").asInstanceOf[JString].values
 
     response.addHeader("Location", s"/v2/${name}/manifests/${reference}")
@@ -218,7 +220,11 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
 
   // Deleting an Image
   delete("/v2/:name/manifests/:reference") {
-    NotImplemented()
+    val name      = params("name")
+    val reference = params("reference")
+    storage.deleteManifest(name, reference)
+    // TODO Delete layers too??
+    Ok()
   }
 
   override def service(req: ServletRequest, res: ServletResponse): Unit = {

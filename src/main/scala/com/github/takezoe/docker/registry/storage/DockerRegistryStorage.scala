@@ -1,6 +1,9 @@
 package com.github.takezoe.docker.registry.storage
 
+import org.apache.commons.io.FileUtils
+
 import java.io.{File, FileOutputStream, InputStream}
+import java.nio.charset.StandardCharsets
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.LongAdder
@@ -52,6 +55,29 @@ class DockerRegistryStorage {
     }
     new File(s"${dataDir}/${name}-${uuid}").renameTo(new File(s"${dataDir}/${name}/${digest}"))
     progress.remove(uuid)
+  }
+
+  def deleteLayer(name: String, digest: String): Unit = {
+    val file = new File(s"${dataDir}/${name}/${digest}")
+    if (file.exists()) {
+      file.delete()
+    }
+  }
+
+  def publishManifest(name: String, reference: String, manifest: String): Unit = {
+    val dir = new File(s"${dataDir}/${name}")
+    if (!dir.exists()) {
+      dir.mkdir()
+    }
+    val file = new File(s"${dataDir}/${name}/${reference}.json")
+    FileUtils.writeByteArrayToFile(file, manifest.getBytes(StandardCharsets.UTF_8))
+  }
+
+  def deleteManifest(name: String, reference: String): Unit = {
+    val file = new File(s"${dataDir}/${name}/${reference}.json")
+    if (file.exists()) {
+      file.delete();
+    }
   }
 
 //  def pushManifest(manifest: com.github.takezoe.docker.registry.entity.Manifest): Unit = {
