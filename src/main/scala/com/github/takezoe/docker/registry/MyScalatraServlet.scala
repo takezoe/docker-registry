@@ -18,6 +18,10 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
   protected implicit lazy val jsonFormats = DefaultFormats
   private val storage = new DockerRegistryStorage()
 
+  before() {
+    response.addHeader("Docker-Distribution-Api-Version", "registry/2.0")
+  }
+
   get("/") {
     Ok()
   }
@@ -26,7 +30,6 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
   get("/v2/") {
     println(s"${request.getMethod} ${request.getRequestURI}")
     contentType = "application/vnd.docker.distribution.manifest.v2+json"
-    response.addHeader("Docker-Distribution-Api-Version", "registry/2.0")
     Ok(Map.empty)
   }
 
@@ -34,7 +37,6 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
   get("/v2/:name/manifests/:reference") {
     //contentType = formats("json")
     contentType = "application/vnd.docker.distribution.manifest.v2+json"
-    response.addHeader("Docker-Distribution-Api-Version", "registry/2.0")
     //println("Accept: " + request.header("Accept"))
     val name      = params("name")
     val reference = params("reference")
@@ -49,7 +51,6 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
   // Existing Manifests
   head("/v2/:name/manifests/:reference") {
     contentType = "application/vnd.docker.distribution.manifest.v2+json"
-    response.addHeader("Docker-Distribution-Api-Version", "registry/2.0")
     val name      = params("name")
     val reference = params("reference")
     val file      = new File(s"data/${name}/${reference}.json")
@@ -95,7 +96,6 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
 
   // Existing Layers
   head("/v2/:name/blobs/:digest") {
-    response.addHeader("Docker-Distribution-Api-Version", "registry/2.0")
     val name   = params("name")
     val digest = params("digest")
     storage.getLayer(name, digest) match {
