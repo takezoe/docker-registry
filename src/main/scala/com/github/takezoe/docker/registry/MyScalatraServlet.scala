@@ -48,18 +48,27 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
 
   // Existing Manifests
   head("/v2/:name/manifests/:reference") {
+    contentType = "application/vnd.docker.distribution.manifest.v2+json"
+    response.addHeader("Docker-Distribution-Api-Version", "registry/2.0")
     val name      = params("name")
-    val reference = params.get("reference")
-
-    NotImplemented()
+    val reference = params("reference")
+    val file      = new File(s"data/${name}/${reference}.json")
+    if (file.exists()) {
+      Ok(headers = Map("Content-Length" -> file.length().toString))
+    } else {
+      NotFound()
+    }
   }
 
   // Pulling a Layer
   get("/v2/:name/blobs/:digest") {
     val name   = params("name")
-    val digest = params.get("digest")
+    val digest = params("digest")
 
-    NotImplemented()
+    storage.getLayer(name, digest) match {
+      case Some(file) => Ok(file)
+      case None       => NotFound()
+    }
   }
 
   // Starting An Upload
@@ -129,8 +138,8 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
 
   // Chunked Upload
   patch("/v2/:name/blobs/uploads/:uuid") {
-    val name   = params("name")
-    val uuid   = params("uuid")
+    val name = params("name")
+    val uuid = params("uuid")
 
     // TODO
     val range  = request.getHeader("Content-Range")
@@ -167,14 +176,13 @@ class MyScalatraServlet extends ScalatraServlet with JacksonJsonSupport {
     val reference = params("reference")
     val bytes     = IOUtils.toByteArray(request.getInputStream)
     val str       = new String(bytes, "UTF-8")
-    val digest    = sha256(str)
 
     // TODO Move this to storage
     FileUtils.writeByteArrayToFile(new File(s"./data/${name}/${reference}.json"), str.getBytes("UTF-8"))
-    FileUtils.writeByteArrayToFile(new File(s"./data/${name}/sha256:${digest}.json"), str.getBytes("UTF-8"))
+    FileUtils.writeByteArrayToFile(new File(s"./data/${name}/sha256:${sha256(str)}.json"), str.getBytes("UTF-8"))
 
-//    val json   = parse(str)
-//    val digest = (json \ "config" \ "digest").asInstanceOf[JString].values
+    val json   = parse(str)
+    val digest = (json \ "config" \ "digest").asInstanceOf[JString].values
 
     response.addHeader("Location", s"/v2/${name}/manifests/${reference}")
     response.addHeader("Docker-Content-Digest", digest)
