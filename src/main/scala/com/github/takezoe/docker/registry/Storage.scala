@@ -1,4 +1,4 @@
-package com.github.takezoe.docker.registry.storage
+package com.github.takezoe.docker.registry
 
 import org.apache.commons.io.FileUtils
 
@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.LongAdder
 import scala.util.Using
 
-class DockerRegistryStorage {
+class Storage {
   private val progress = new ConcurrentHashMap[String, LongAdder]()
   private val dataDir = "./data"
 
@@ -78,6 +78,15 @@ class DockerRegistryStorage {
     if (file.exists()) {
       file.delete();
     }
+  }
+
+  def getTags(name: String): Tags = {
+    val file = new File(s"${dataDir}/$name")
+    val tags = file.listFiles((file, name) => name.endsWith(".json"))
+      .map { file =>
+        file.getName.replace("\\.json$", "")
+      }
+    Tags(name, tags)
   }
 
 //  def pushManifest(manifest: com.github.takezoe.docker.registry.entity.Manifest): Unit = {
